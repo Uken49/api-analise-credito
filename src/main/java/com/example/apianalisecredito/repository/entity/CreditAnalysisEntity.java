@@ -18,13 +18,23 @@ public class CreditAnalysisEntity {
     UUID id;
     Boolean approved;
     BigDecimal approvedLimit;
-    BigDecimal requestedAmount;
     BigDecimal withdraw;
-    BigDecimal monthly_income;
-    BigDecimal requested_amount;
+    BigDecimal monthlyIncome;
+    BigDecimal requestedAmount;
     BigDecimal annualInterest;
     UUID clientId;
     LocalDateTime date;
+
+    public CreditAnalysisEntity(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome, BigDecimal requestedAmount, BigDecimal annualInterest, UUID clientId) {
+        this.approved = approved;
+        this.approvedLimit = approvedLimit;
+        this.withdraw = withdraw;
+        this.monthlyIncome = monthlyIncome;
+        this.requestedAmount = requestedAmount;
+        this.annualInterest = annualInterest;
+        this.clientId = clientId;
+        this.date = LocalDateTime.now();
+    }
 
     public UUID getId() {
         return id;
@@ -38,12 +48,16 @@ public class CreditAnalysisEntity {
         return approvedLimit;
     }
 
-    public BigDecimal getRequestedAmount() {
-        return requestedAmount;
-    }
-
     public BigDecimal getWithdraw() {
         return withdraw;
+    }
+
+    public BigDecimal getMonthlyIncome() {
+        return monthlyIncome;
+    }
+
+    public BigDecimal getRequestedAmount() {
+        return requestedAmount;
     }
 
     public BigDecimal getAnnualInterest() {
