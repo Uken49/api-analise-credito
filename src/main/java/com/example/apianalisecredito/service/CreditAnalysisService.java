@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 public class CreditAnalysisService {
     public AnalysisCreditResponse requestCreditAnalysis(AnalysisCreditRequest dataToAnalyze) {
 
+
         return null;
     }
 }
