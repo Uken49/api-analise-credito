@@ -1,7 +1,7 @@
 package com.example.apianalisecredito.controller;
 
-import com.example.apianalisecredito.controller.request.AnalysisCreditRequest;
-import com.example.apianalisecredito.controller.response.AnalysisCreditResponse;
+import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
+import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.service.CreditAnalysisService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,27 +23,27 @@ public class CreditAnalysisController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public AnalysisCreditResponse requestCreditAnalysis(
-            @RequestBody AnalysisCreditRequest dataToAnalyze
+    public CreditAnalysisResponse requestCreditAnalysis(
+            @RequestBody CreditAnalysisRequest creditAnalysisRequest
     ) {
-        return service.requestCreditAnalysis(dataToAnalyze);
+        return service.requestCreditAnalysis(creditAnalysisRequest);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public AnalysisCreditResponse listCreditAnalysis() {
+    public CreditAnalysisResponse listCreditAnalysis() {
         return null;
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public AnalysisCreditResponse getCreditAnalysisById(@PathVariable UUID id) {
+    public CreditAnalysisResponse getCreditAnalysisById(@PathVariable UUID id) {
         return null;
     }
 
     @GetMapping("/{cpf}")
     @ResponseStatus(HttpStatus.OK)
-    public AnalysisCreditResponse getCreditAnalysisByCpf(@PathVariable Integer cpf) {
+    public CreditAnalysisResponse getCreditAnalysisByCpf(@PathVariable Integer cpf) {
         return null;
     }
 }
