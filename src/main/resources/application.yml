@@ -9,11 +9,28 @@ spring: # Configuracao do spring
     init: # Ao incializar
       continue-on-error: true # Se a conexao falhar, a aplicacao continua a rodar
 
+  cloud:
+    open-feign:
+      client:
+        config:
+          apiClient:
+            connectTimeout: 3000
+            readTimeout: 500
+            loggerLevel: BASIC
+
   datasource:
     url: jdbc:postgresql://localhost:5433/postgres # URL da conexao, no caso, o docker na porta 5432
     username: admin # Usuario para conectar
     password: root # Senha para conectar
     driver-class-name: org.postgresql.Driver # Driver do banco utilizado
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 15
+      connection-timeout: 3000
+      idle-timeout: 300000
+      max-lifetime: 600000
+      initialization-fail-timeout: -1
+      validation-timeout: 1000
 
   jpa:  # Configuracao do JPA
     generate-ddl: false # Gerar as tabelas mapeadas com @Entity
