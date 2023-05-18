@@ -1,8 +1,6 @@
 package com.example.apianalisecredito.repository.entity;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,7 +11,6 @@ import org.hibernate.annotations.Immutable;
 @Immutable
 public class CreditAnalysisEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
     Boolean approved;
     BigDecimal approvedLimit;
@@ -26,6 +23,7 @@ public class CreditAnalysisEntity {
 
     public CreditAnalysisEntity(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome, BigDecimal requestedAmount,
                                 BigDecimal annualInterest, UUID clientId) {
+        this.id = UUID.randomUUID();
         this.approved = approved;
         this.approvedLimit = approvedLimit;
         this.withdraw = withdraw;
