@@ -13,6 +13,6 @@ public interface CreditAnalysisMapper {
 
     CreditAnalysisEntity fromEntity(CreditAnalysisModel creditAnalysisModel);
 
-    CreditAnalysisResponse fromRequest(CreditAnalysisEntity creditAnalysisEntity);
+    CreditAnalysisResponse fromResponse(CreditAnalysisEntity creditAnalysisEntity);
 
 }
