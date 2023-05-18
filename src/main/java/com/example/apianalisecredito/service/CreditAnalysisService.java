@@ -7,6 +7,7 @@ import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
+import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,23 +21,64 @@ public class CreditAnalysisService {
     private final ApiClient apiClient;
 
     // Business rules
-    private final Double withdrawalLimitPercentage = 0.1;
-    private final Double interestPerYearPercentage = 0.15;
-    private final BigDecimal maximumAmountOfMonthlyIncomeConsidered = BigDecimal.valueOf(50_000.00);
-    private final double percentageApprovedValue;
-    private final double ifRequestedValueIsGreaterThan50 = 0.15;
-    private final double ifTheRequestedValueIsLessThanOrEqual50 = 0.3;
+    private final BigDecimal withdrawalLimitPercentage = BigDecimal.valueOf(0.1);
+    private final BigDecimal interestPerYearPercentage = BigDecimal.valueOf(0.15);
+    private final BigDecimal maxAmountOfMonthlyIncomeConsidered = BigDecimal.valueOf(50_000.00);
+    private final BigDecimal ifRequestedValueIsGreaterThan50 = BigDecimal.valueOf(0.15);
+    private final BigDecimal ifTheRequestedValueIsLessThanOrEqual50 = BigDecimal.valueOf(0.3);
+    private final BigDecimal percentageForCreditAnalysis = BigDecimal.valueOf(0.5);
+    private final int equalToHalfTheValue = 0;
+
 
     public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
         final ApiClientDto clientById = apiClient.getClientById(creditAnalysisModel.clientId());
+        final CreditAnalysisModel creditAnalysisModelUpdated;
 
-        final Integer requestAmountGreaterThanMonthlyIncome = -1; // 1 significa que o requestAmount é maior que o monthlyIncome
-        if (creditAnalysisModel.requestedAmount().compareTo(creditAnalysisModel.monthlyIncome()) == requestAmountGreaterThanMonthlyIncome) {
-            return null;
+        final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount();
+        final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome();
+
+        final BigDecimal consideredValue;
+
+        final Boolean approved;
+        final BigDecimal approvedLimit;
+        final BigDecimal withdraw;
+        final BigDecimal annualInterest;
+
+        if (requestedAmount.compareTo(monthlyIncome) > equalToHalfTheValue) {
+            approved = false;
+            withdraw = BigDecimal.valueOf(0);
+            annualInterest = BigDecimal.valueOf(0);
+            approvedLimit = BigDecimal.valueOf(0);
+            creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(approved, approvedLimit, withdraw, annualInterest);
+            return null; //exception
         }
 
-        return null;
+        if (requestedAmount.compareTo(monthlyIncome.multiply(maxAmountOfMonthlyIncomeConsidered)) > equalToHalfTheValue) {
+            consideredValue = maxAmountOfMonthlyIncomeConsidered;
+        } else {
+            consideredValue = requestedAmount;
+        }
+
+        if (requestedAmount.multiply(percentageForCreditAnalysis).compareTo(monthlyIncome) > equalToHalfTheValue) {
+            approvedLimit = consideredValue.multiply(ifRequestedValueIsGreaterThan50);
+        } else {
+            approvedLimit = consideredValue.multiply(ifTheRequestedValueIsLessThanOrEqual50);
+        }
+
+        approved = true;
+        withdraw = approvedLimit.multiply(withdrawalLimitPercentage);
+        annualInterest = interestPerYearPercentage;
+
+        creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(approved, approvedLimit, withdraw, annualInterest);
+        System.out.println(creditAnalysisModelUpdated);
+
+        final CreditAnalysisEntity creditAnalysisEntity = mapper.fromEntity(creditAnalysisModelUpdated);
+        final CreditAnalysisResponse creditAnalysisResponse = mapper.fromResponse(creditAnalysisEntity);
+
+        System.out.println("chegou ao fim");
+        System.out.println(creditAnalysisModelUpdated);
+        return creditAnalysisResponse;
     }
 }
