@@ -13,6 +13,6 @@ public interface ApiClient {
     ApiClientDto getClientById(@PathVariable UUID id);
 
     @GetMapping("/{cpf}")
-    ApiClientDto getClientByCpf(@PathVariable Integer cpf);
+    ApiClientDto getClientByCpf(@PathVariable String cpf);
 
 }
