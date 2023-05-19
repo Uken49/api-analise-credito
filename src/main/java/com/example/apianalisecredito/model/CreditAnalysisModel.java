@@ -31,10 +31,10 @@ public record CreditAnalysisModel(
                 .approved(approved)
                 .approvedLimit(approvedLimit)
                 .withdraw(withdraw)
-                .monthlyIncome(this.monthlyIncome())
-                .requestedAmount(this.requestedAmount())
+                .monthlyIncome(this.monthlyIncome)
+                .requestedAmount(this.requestedAmount)
                 .annualInterest(annualInterest)
-                .clientId(this.clientId())
+                .clientId(this.clientId)
                 .build();
     }
 }
