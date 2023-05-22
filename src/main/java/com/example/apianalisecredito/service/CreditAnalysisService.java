@@ -4,12 +4,14 @@ import com.example.apianalisecredito.apiclient.ApiClient;
 import com.example.apianalisecredito.apiclient.dto.ApiClientDto;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
+import com.example.apianalisecredito.handler.exception.CreditAnalysisNotFoundException;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +80,12 @@ public class CreditAnalysisService {
         creditAnalysisEntitySaved = repository.save(creditAnalysisEntity);
 
         return mapper.fromResponse(creditAnalysisEntitySaved);
+    }
+
+    public CreditAnalysisResponse getCreditAnalysisById(UUID id) {
+        return mapper.fromResponse(
+                repository.findById(id)
+                        .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com id:%s não foi encontrad".formatted(id))));
     }
 
 }
