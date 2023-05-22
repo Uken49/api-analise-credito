@@ -4,24 +4,27 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Builder;
 
-public record CreditAnalysisModel(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome,
-                                  BigDecimal requestedAmount, BigDecimal annualInterest, UUID clientId, String cpf) {
-
-    @Builder(toBuilder = true)
-    public CreditAnalysisModel(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome, BigDecimal requestedAmount,
-                               BigDecimal annualInterest, UUID clientId, String cpf) {
-        this.approved = approved;
-        this.approvedLimit = approvedLimit;
-        this.withdraw = withdraw;
-        this.monthlyIncome = monthlyIncome;
-        this.requestedAmount = requestedAmount;
-        this.annualInterest = annualInterest;
-        this.clientId = clientId;
-        this.cpf = cpf;
-    }
+@Builder(toBuilder = true)
+public record CreditAnalysisModel(
+        Boolean approved,
+        BigDecimal approvedLimit,
+        BigDecimal withdraw,
+        BigDecimal monthlyIncome,
+        BigDecimal requestedAmount,
+        BigDecimal annualInterest,
+        UUID clientId,
+        String cpf
+) {
 
     public CreditAnalysisModel creditAnalysisUpdate(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal annualInterest) {
-        return this.toBuilder().approved(approved).approvedLimit(approvedLimit).withdraw(withdraw).monthlyIncome(this.monthlyIncome)
-                .requestedAmount(this.requestedAmount).annualInterest(annualInterest).clientId(this.clientId).build();
+        return this.toBuilder()
+                .approved(approved)
+                .approvedLimit(approvedLimit)
+                .withdraw(withdraw)
+                .monthlyIncome(this.monthlyIncome)
+                .requestedAmount(this.requestedAmount)
+                .annualInterest(annualInterest)
+                .clientId(this.clientId)
+                .build();
     }
 }
