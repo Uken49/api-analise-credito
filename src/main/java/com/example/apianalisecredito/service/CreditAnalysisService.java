@@ -9,6 +9,7 @@ import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import java.math.BigDecimal;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,15 @@ public class CreditAnalysisService {
     public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
-        final ApiClientDto clientById = apiClient.getClientById(creditAnalysisModel.clientId());
+        final String idOrCpf;
+
+        if (Objects.isNull(creditAnalysisModel.cpf())) {
+            idOrCpf = creditAnalysisModel.clientId().toString();
+        } else {
+            idOrCpf = creditAnalysisModel.cpf();
+        }
+
+        final ApiClientDto clientById = apiClient.getClientByIdOrCpf(idOrCpf);
         final CreditAnalysisModel creditAnalysisModelUpdated;
 
         final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount();
