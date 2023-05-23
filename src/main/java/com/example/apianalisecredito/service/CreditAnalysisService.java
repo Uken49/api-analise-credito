@@ -11,6 +11,7 @@ import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -102,6 +103,12 @@ public class CreditAnalysisService {
                 .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada".formatted(analysisType, identifier)));
 
         return mapper.fromResponse(creditAnalysisEntity);
+    }
+
+    public List<CreditAnalysisResponse> getAllCreditAnalysis() {
+        return repository.findAll().stream()
+                .map(mapper::fromResponse)
+                .toList();
     }
 
 }

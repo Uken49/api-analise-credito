@@ -3,6 +3,7 @@ package com.example.apianalisecredito.controller;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.service.CreditAnalysisService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +31,8 @@ public class CreditAnalysisController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse listCreditAnalysis() {
-        return null;
+    public List<CreditAnalysisResponse> getAllCreditAnalysis() {
+        return service.getAllCreditAnalysis();
     }
 
     @GetMapping("/{idOrCpf}")
