@@ -24,6 +24,6 @@ public class HandlerExceptionAdvice {
     @ExceptionHandler(CreditAnalysisNotFoundException.class)
     public ProblemDetail creditAnalysisNotFoundHandler(CreditAnalysisNotFoundException canfe) {
 
-        return builderProblemDetail("Usuário não pôde ser criado", HttpStatus.BAD_REQUEST, canfe.getMessage());
+        return builderProblemDetail("Análise não encontrada", HttpStatus.NOT_FOUND, canfe.getMessage());
     }
 }
