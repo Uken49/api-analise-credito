@@ -82,10 +82,26 @@ public class CreditAnalysisService {
         return mapper.fromResponse(creditAnalysisEntitySaved);
     }
 
-    public CreditAnalysisResponse getCreditAnalysisById(UUID id) {
-        return mapper.fromResponse(
-                repository.findById(id)
-                        .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com id:%s não foi encontrad".formatted(id))));
+    public CreditAnalysisResponse getCreditAnalysisById(String identifier) {
+        final int cpfSizeWithoutPunctuation = 11;
+        final int cpfSizeWithPunctuation = 14;
+        final CreditAnalysisEntity creditAnalysisEntity;
+        final UUID id;
+        final String analysisType;
+
+        if (identifier.length() == cpfSizeWithoutPunctuation || identifier.length() == cpfSizeWithPunctuation) {
+            final ApiClientDto clientById = apiClient.getClientByIdOrCpf(identifier);
+            id = clientById.id();
+            analysisType = "cpf";
+        } else {
+            id = UUID.fromString(identifier);
+            analysisType = "id";
+        }
+
+        creditAnalysisEntity = repository.findById(id)
+                .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada".formatted(analysisType, identifier)));
+
+        return mapper.fromResponse(creditAnalysisEntity);
     }
 
 }

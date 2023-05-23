@@ -3,7 +3,6 @@ package com.example.apianalisecredito.controller;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.service.CreditAnalysisService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,15 +34,10 @@ public class CreditAnalysisController {
         return null;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{idOrCpf}")
     @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse getCreditAnalysisById(@PathVariable UUID id) {
-        return null;
+    public CreditAnalysisResponse getCreditAnalysisById(@PathVariable String idOrCpf) {
+        return service.getCreditAnalysisById(idOrCpf);
     }
 
-    @GetMapping("/{cpf}")
-    @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse getCreditAnalysisByCpf(@PathVariable Integer cpf) {
-        return null;
-    }
 }
