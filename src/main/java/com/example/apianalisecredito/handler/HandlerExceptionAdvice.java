@@ -1,5 +1,6 @@
 package com.example.apianalisecredito.handler;
 
+import com.example.apianalisecredito.handler.exception.ClientNotFoundException;
 import com.example.apianalisecredito.handler.exception.CreditAnalysisNotFoundException;
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -21,9 +22,23 @@ public class HandlerExceptionAdvice {
         return problemDetail;
     }
 
+    @ExceptionHandler(ClientNotFoundException.class)
+    public ProblemDetail clientNotFoundExceptionHandler(ClientNotFoundException cnfe) {
+
+        return builderProblemDetail(
+                "Cliente não encontrado"
+                , HttpStatus.UNPROCESSABLE_ENTITY
+                , cnfe.getMessage()
+        );
+    }
+
     @ExceptionHandler(CreditAnalysisNotFoundException.class)
     public ProblemDetail creditAnalysisNotFoundHandler(CreditAnalysisNotFoundException canfe) {
 
-        return builderProblemDetail("Análise não encontrada", HttpStatus.NOT_FOUND, canfe.getMessage());
+        return builderProblemDetail(
+                "Análise não encontrada",
+                HttpStatus.NOT_FOUND,
+                canfe.getMessage()
+        );
     }
 }
