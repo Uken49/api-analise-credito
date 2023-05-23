@@ -36,7 +36,7 @@ public class CreditAnalysisService {
     public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
-        final ApiClientDto clientById = apiClient.getClientByIdOrCpf(creditAnalysisModel.clientId().toString());
+        apiClient.getClientByIdOrCpf(creditAnalysisModel.clientId().toString());
 
         final CreditAnalysisModel creditAnalysisModelUpdated;
         final CreditAnalysisEntity creditAnalysisEntity;
