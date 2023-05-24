@@ -4,11 +4,13 @@ import com.example.apianalisecredito.apiclient.ApiClient;
 import com.example.apianalisecredito.apiclient.dto.ApiClientDto;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
+import com.example.apianalisecredito.handler.exception.ClientNotFoundException;
 import com.example.apianalisecredito.handler.exception.CreditAnalysisNotFoundException;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
+import feign.FeignException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -36,7 +38,8 @@ public class CreditAnalysisService {
     public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
-        apiClient.getClientByIdOrCpf(creditAnalysisModel.clientId().toString());
+        final String analysisType = "id";
+        consultId(analysisType, creditAnalysisModel.clientId().toString());
 
         final CreditAnalysisModel creditAnalysisModelUpdated;
         final CreditAnalysisEntity creditAnalysisEntity;
@@ -91,16 +94,17 @@ public class CreditAnalysisService {
         final String analysisType;
 
         if (identifier.length() == cpfSizeWithoutPunctuation || identifier.length() == cpfSizeWithPunctuation) {
-            final ApiClientDto clientById = apiClient.getClientByIdOrCpf(identifier);
-            id = clientById.id();
             analysisType = "cpf";
+            final ApiClientDto clientById = consultId(analysisType, identifier);
+            id = clientById.id();
         } else {
-            id = UUID.fromString(identifier);
             analysisType = "id";
+            id = UUID.fromString(identifier);
         }
 
         creditAnalysisEntity = repository.findById(id)
-                .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada".formatted(analysisType, identifier)));
+                .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada"
+                        .formatted(analysisType, identifier)));
 
         return mapper.fromResponse(creditAnalysisEntity);
     }
@@ -109,6 +113,14 @@ public class CreditAnalysisService {
         return repository.findAll().stream()
                 .map(mapper::fromResponse)
                 .toList();
+    }
+
+    private ApiClientDto consultId(String analysisType, String identifier) {
+        try {
+            return apiClient.getClientByIdOrCpf(identifier);
+        } catch (FeignException fe) {
+            throw new ClientNotFoundException("Cliente com %s: %s não foi encontrado".formatted(analysisType, identifier));
+        }
     }
 
 }
