@@ -75,7 +75,7 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
-    void should_return_exception_when_idCliente_is_not_found() {
+    void should_throw_ClientNotFoundException_when_idCliente_is_not_found() {
         final CreditAnalysisRequest creditAnalysisRequest = creditAnalysisRequestFactory();
 
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
