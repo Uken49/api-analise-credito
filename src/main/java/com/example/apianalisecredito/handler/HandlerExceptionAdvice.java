@@ -25,20 +25,12 @@ public class HandlerExceptionAdvice {
     @ExceptionHandler(ClientNotFoundException.class)
     public ProblemDetail clientNotFoundExceptionHandler(ClientNotFoundException cnfe) {
 
-        return builderProblemDetail(
-                "Cliente não encontrado"
-                , HttpStatus.UNPROCESSABLE_ENTITY
-                , cnfe.getMessage()
-        );
+        return builderProblemDetail("Cliente não encontrado", HttpStatus.UNPROCESSABLE_ENTITY, cnfe.getMessage());
     }
 
     @ExceptionHandler(CreditAnalysisNotFoundException.class)
     public ProblemDetail creditAnalysisNotFoundHandler(CreditAnalysisNotFoundException canfe) {
 
-        return builderProblemDetail(
-                "Análise não encontrada",
-                HttpStatus.NOT_FOUND,
-                canfe.getMessage()
-        );
+        return builderProblemDetail("Análise não encontrada", HttpStatus.NOT_FOUND, canfe.getMessage());
     }
 }
