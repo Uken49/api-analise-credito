@@ -74,7 +74,7 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
-    void should_do_credit_analysis_when_requestAmount_is_greater_than_maxAmountOfMonthlyIncomeConsidered() {
+    void should_do_credit_analysis_when_monthlyIncome_is_greater_than_maxAmountOfMonthlyIncomeConsidered() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
         final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
 
@@ -94,7 +94,6 @@ class CreditAnalysisServiceTest {
         assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
-
     }
 
     @Test
