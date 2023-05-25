@@ -7,21 +7,25 @@ import java.util.UUID;
 
 public class CreditAnalysisFactory {
     public static CreditAnalysisRequest requestAmountGreaterThanMonthlyIncome(
+            BigDecimal monthlyIncome,
+            BigDecimal requestedAmount
     ) {
         return new CreditAnalysisRequest(
                 UUID.fromString("234c443e-5853-4830-8f1b-dd55ca65c48a"),
-                BigDecimal.valueOf(10_000.00),
-                BigDecimal.valueOf(12_150.49),
+                monthlyIncome,
+                requestedAmount,
                 "08505694007"
         );
     }
 
     public static CreditAnalysisRequest requestAmountLessThanMonthlyIncome(
+            BigDecimal monthlyIncome,
+            BigDecimal requestedAmount
     ) {
         return new CreditAnalysisRequest(
                 UUID.fromString("9a3ce119-293a-4fcd-8d4f-08bbb345c022"),
-                BigDecimal.valueOf(2_000.00),
-                BigDecimal.valueOf(800.00),
+                monthlyIncome,
+                requestedAmount,
                 "08505694007"
         );
     }

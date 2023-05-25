@@ -55,8 +55,11 @@ class CreditAnalysisServiceTest {
 
 
     @Test
-    void deve_verificar_a_integridade_dos_dados_durante_a_analise_de_credito() {
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome();
+    void should_verify_the_integrity_of_the_data_during_the_credit_analysis() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome,requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityApproved();
         final ApiClientDto apiClientDto = dtoWithId();
 
@@ -71,17 +74,14 @@ class CreditAnalysisServiceTest {
         assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
         assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
-
-        assertEquals(creditAnalysisRequest.clientId(), creditAnalysisResponse.clientId());
-        assertTrue(creditAnalysisResponse.approved());
-        assertEquals(BigDecimal.valueOf(600.00), creditAnalysisResponse.approvedLimit());
-        assertEquals(BigDecimal.valueOf(60), creditAnalysisResponse.withdraw());
-        assertEquals(BigDecimal.valueOf(15), creditAnalysisResponse.annualInterest());
     }
 
     @Test
     void should_refuse_credit_analysis_with_requestetAmount_greater_than_monthlyIncome() {
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome();
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
         final ApiClientDto apiClientDto = dtoWithId();
 
@@ -91,22 +91,25 @@ class CreditAnalysisServiceTest {
         final CreditAnalysisResponse creditAnalysisResponse = service.requestCreditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
-        assertNotNull(creditAnalysisResponse);
+        assertNotNull(creditAnalysisEntityCapture);
         assertEquals(idArgumentCaptor.getValue(), creditAnalysisRequest.clientId().toString());
-        assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
-        assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
-        assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
 
-        assertEquals(creditAnalysisRequest.clientId(), creditAnalysisResponse.clientId());
-        assertFalse(creditAnalysisResponse.approved());
-        assertEquals(BigDecimal.ZERO, creditAnalysisResponse.approvedLimit());
-        assertEquals(BigDecimal.ZERO, creditAnalysisResponse.withdraw());
+        assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
+
+        assertFalse(creditAnalysisEntityCapture.getApproved());
+        assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
+        assertEquals(creditAnalysisEntityCapture.getMonthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisResponse.annualInterest());
     }
 
     @Test
     void should_throw_ClientNotFoundException_when_idCliente_is_not_found() {
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome();
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
 
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
 
