@@ -28,12 +28,13 @@ public class CreditAnalysisService {
 
     // Business rules
     private final BigDecimal withdrawalLimitPercentage = BigDecimal.valueOf(0.1);
-    private final BigDecimal interestPerYearPercentage = new BigDecimal(15);
-    private final BigDecimal maxAmountOfMonthlyIncomeConsidered = BigDecimal.valueOf(50_000.00);
+    private final BigDecimal interestPerYearPercentage = BigDecimal.valueOf(15, 0);
+    private final BigDecimal maxAmountOfMonthlyIncomeConsidered = BigDecimal.valueOf(50_000_00, 2);
     private final BigDecimal ifRequestedValueIsGreaterThan50 = BigDecimal.valueOf(0.15);
     private final BigDecimal ifTheRequestedValueIsLessThanOrEqual50 = BigDecimal.valueOf(0.3);
     private final BigDecimal percentageForCreditAnalysis = BigDecimal.valueOf(0.5);
     private final int equalToHalfTheValue = 0;
+    private final int decimalScale = 2;
 
     public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
@@ -45,10 +46,10 @@ public class CreditAnalysisService {
         final CreditAnalysisEntity creditAnalysisEntity;
         final CreditAnalysisEntity creditAnalysisEntitySaved;
 
-        final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount().setScale(2, RoundingMode.HALF_UP);
-        final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome().setScale(2, RoundingMode.HALF_UP);
+        final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount().setScale(decimalScale, RoundingMode.HALF_UP);
+        final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome().setScale(decimalScale, RoundingMode.HALF_UP);
 
-        final BigDecimal consideredValue;
+        final BigDecimal monthlyIncomeConsideredValue;
 
         final boolean approved;
         final BigDecimal approvedLimit;
@@ -62,21 +63,22 @@ public class CreditAnalysisService {
             approvedLimit = BigDecimal.valueOf(0);
         } else {
 
-            if (requestedAmount.compareTo(monthlyIncome.multiply(maxAmountOfMonthlyIncomeConsidered)) > equalToHalfTheValue) {
-                consideredValue = maxAmountOfMonthlyIncomeConsidered;
+            if (monthlyIncome.compareTo(maxAmountOfMonthlyIncomeConsidered) > equalToHalfTheValue) {
+                monthlyIncomeConsideredValue = maxAmountOfMonthlyIncomeConsidered;
             } else {
-                consideredValue = requestedAmount;
+                monthlyIncomeConsideredValue = monthlyIncome;
             }
 
-            if (requestedAmount.multiply(percentageForCreditAnalysis).compareTo(monthlyIncome) > equalToHalfTheValue) {
-                approvedLimit = consideredValue.multiply(ifRequestedValueIsGreaterThan50);
+            if (requestedAmount.compareTo(monthlyIncomeConsideredValue.multiply(percentageForCreditAnalysis)) > equalToHalfTheValue) {
+                approvedLimit = monthlyIncomeConsideredValue.multiply(ifRequestedValueIsGreaterThan50).setScale(decimalScale, RoundingMode.HALF_UP);
             } else {
-                approvedLimit = consideredValue.multiply(ifTheRequestedValueIsLessThanOrEqual50);
+                approvedLimit =
+                        monthlyIncomeConsideredValue.multiply(ifTheRequestedValueIsLessThanOrEqual50).setScale(decimalScale, RoundingMode.HALF_UP);
             }
 
             approved = true;
-            withdraw = approvedLimit.multiply(withdrawalLimitPercentage);
-            annualInterest = interestPerYearPercentage;
+            withdraw = approvedLimit.multiply(withdrawalLimitPercentage).setScale(decimalScale, RoundingMode.HALF_UP);
+            annualInterest = interestPerYearPercentage.setScale(0, RoundingMode.HALF_UP);
         }
 
         creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(approved, approvedLimit, withdraw, annualInterest);

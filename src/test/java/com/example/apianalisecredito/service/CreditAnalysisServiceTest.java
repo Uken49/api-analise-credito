@@ -1,8 +1,8 @@
 package com.example.apianalisecredito.service;
 
-import static com.example.apianalisecredito.factory.ApiClientDtoFactory.*;
-import static com.example.apianalisecredito.factory.CreditAnalysisFactory.entityApproved;
+import static com.example.apianalisecredito.factory.ApiClientDtoFactory.dtoWithId;
 import static com.example.apianalisecredito.factory.CreditAnalysisFactory.entityNotApproved;
+import static com.example.apianalisecredito.factory.CreditAnalysisFactory.entityRequestAmountGreaterThanMonthlyIncome;
 import static com.example.apianalisecredito.factory.CreditAnalysisFactory.requestAmountGreaterThanMonthlyIncome;
 import static com.example.apianalisecredito.factory.CreditAnalysisFactory.requestAmountLessThanMonthlyIncome;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,8 +16,6 @@ import com.example.apianalisecredito.apiclient.ApiClient;
 import com.example.apianalisecredito.apiclient.dto.ApiClientDto;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
-import com.example.apianalisecredito.factory.ApiClientDtoFactory;
-import com.example.apianalisecredito.factory.CreditAnalysisFactory;
 import com.example.apianalisecredito.handler.exception.ClientNotFoundException;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapperImpl;
@@ -53,14 +51,13 @@ class CreditAnalysisServiceTest {
     @Captor
     private ArgumentCaptor<CreditAnalysisEntity> creditAnalysisEntityArgumentCaptor;
 
-
     @Test
     void should_verify_the_integrity_of_the_data_during_the_credit_analysis() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
         final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
 
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome,requestedAmount);
-        final CreditAnalysisEntity creditAnalysisEntity = entityApproved();
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
+        final CreditAnalysisEntity creditAnalysisEntity = entityRequestAmountGreaterThanMonthlyIncome();
         final ApiClientDto apiClientDto = dtoWithId();
 
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
@@ -76,6 +73,29 @@ class CreditAnalysisServiceTest {
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
     }
 
+    @Test
+    void deve_fazer_analise_de_credito_quando_requestAmount_e_maior_que_maxAmountOfMonthlyIncomeConsidered() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
+        final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
+        final ApiClientDto apiClientDto = dtoWithId();
+
+        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
+
+        service.requestCreditAnalysis(creditAnalysisRequest);
+        final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
+
+        assertTrue(creditAnalysisEntityCapture.getApproved());
+        assertEquals(BigDecimal.valueOf(7_500_00,2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(750_00,2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
+        assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
+        assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
+
+    }
 
     @Test
     void should_refuse_credit_analysis_with_requestAmount_greater_than_monthlyIncome() {
@@ -89,7 +109,7 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
-        final CreditAnalysisResponse creditAnalysisResponse = service.requestCreditAnalysis(creditAnalysisRequest);
+        service.requestCreditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertNotNull(creditAnalysisEntityCapture);
@@ -101,8 +121,8 @@ class CreditAnalysisServiceTest {
         assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getApprovedLimit());
         assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getWithdraw());
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
-        assertEquals(creditAnalysisEntityCapture.getMonthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
-        assertEquals(BigDecimal.valueOf(15), creditAnalysisResponse.annualInterest());
+        assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
+        assertEquals(BigDecimal.valueOf(0), creditAnalysisEntityCapture.getAnnualInterest());
     }
 
     @Test
