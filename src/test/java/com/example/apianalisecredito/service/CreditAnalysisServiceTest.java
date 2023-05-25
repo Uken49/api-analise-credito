@@ -74,7 +74,7 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
-    void deve_fazer_analise_de_credito_quando_requestAmount_e_maior_que_maxAmountOfMonthlyIncomeConsidered() {
+    void should_do_credit_analysis_when_requestAmount_is_greater_than_maxAmountOfMonthlyIncomeConsidered() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
         final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
 
