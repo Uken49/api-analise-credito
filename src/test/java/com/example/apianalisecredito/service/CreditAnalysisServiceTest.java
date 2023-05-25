@@ -74,6 +74,30 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
+    void should_do_credit_analysis_when_requestAmount_is_less_than_maxAmountOfMonthlyIncomeConsidered() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(6_734.98);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(3_438.12);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
+        final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
+        final ApiClientDto apiClientDto = dtoWithId();
+
+        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
+
+        service.requestCreditAnalysis(creditAnalysisRequest);
+        final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
+
+        assertTrue(creditAnalysisEntityCapture.getApproved());
+        assertEquals(BigDecimal.valueOf(2_020_49,2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(202_04,2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
+        assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
+        assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
+
+    }
+
+    @Test
     void should_do_credit_analysis_when_monthlyIncome_is_greater_than_maxAmountOfMonthlyIncomeConsidered() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
         final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
