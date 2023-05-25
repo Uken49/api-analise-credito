@@ -76,8 +76,9 @@ class CreditAnalysisServiceTest {
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
     }
 
+
     @Test
-    void should_refuse_credit_analysis_with_requestetAmount_greater_than_monthlyIncome() {
+    void should_refuse_credit_analysis_with_requestAmount_greater_than_monthlyIncome() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
         final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
 
