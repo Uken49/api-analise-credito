@@ -24,6 +24,7 @@ import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import feign.FeignException;
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -65,7 +66,7 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
-        final CreditAnalysisResponse creditAnalysisResponse = service.requestCreditAnalysis(creditAnalysisRequest);
+        final CreditAnalysisResponse creditAnalysisResponse = service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertNotNull(creditAnalysisResponse);
@@ -87,7 +88,7 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
-        service.requestCreditAnalysis(creditAnalysisRequest);
+        service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
@@ -111,7 +112,7 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
-        service.requestCreditAnalysis(creditAnalysisRequest);
+        service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
@@ -134,7 +135,7 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
-        service.requestCreditAnalysis(creditAnalysisRequest);
+        service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertNotNull(creditAnalysisEntityCapture);
@@ -160,7 +161,26 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
 
         assertThrows(ClientNotFoundException.class,
-                () -> service.requestCreditAnalysis(creditAnalysisRequest));
+                () -> service.creditAnalysis(creditAnalysisRequest));
+    }
+
+    @Test
+    void should_return_an_empty_credit_analysis_list() {
+
+        when(repository.findAll()).thenReturn(Collections.emptyList());
+        List<CreditAnalysisResponse> allCreditAnalysis = service.getAllCreditAnalysis();
+
+        assertTrue(allCreditAnalysis.isEmpty());
+    }
+
+    @Test
+    void should_throw_CreditAnalysisNotFoundException_when_not_found_credit_analysis() {
+        final String id = UUID.randomUUID().toString();
+
+        when(repository.findById(UUID.fromString(idArgumentCaptor.capture()))).thenThrow(FeignException.class);
+
+        assertThrows(ClientNotFoundException.class, () -> service.getCreditAnalysisById(id));
+        assertEquals(id, idArgumentCaptor.getValue());
     }
 
     @Test
@@ -172,6 +192,6 @@ class CreditAnalysisServiceTest {
 
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
 
-        assertThrows(ClientNotFoundException.class, () -> service.requestCreditAnalysis(creditAnalysisRequest));
+        assertThrows(ClientNotFoundException.class, () -> service.creditAnalysis(creditAnalysisRequest));
     }
 }

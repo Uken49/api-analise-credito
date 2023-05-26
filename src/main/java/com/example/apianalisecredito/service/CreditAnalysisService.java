@@ -36,7 +36,7 @@ public class CreditAnalysisService {
     private final int equalToHalfTheValue = 0;
     private final int decimalScale = 2;
 
-    public CreditAnalysisResponse requestCreditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
+    public CreditAnalysisResponse creditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
         final String analysisType = "id";

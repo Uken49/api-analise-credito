@@ -26,7 +26,7 @@ public class CreditAnalysisController {
     public CreditAnalysisResponse requestCreditAnalysis(
             @RequestBody CreditAnalysisRequest creditAnalysisRequest
     ) {
-        return service.requestCreditAnalysis(creditAnalysisRequest);
+        return service.creditAnalysis(creditAnalysisRequest);
     }
 
     @GetMapping
