@@ -17,6 +17,7 @@ import com.example.apianalisecredito.apiclient.dto.ApiClientDto;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.handler.exception.ClientNotFoundException;
+import com.example.apianalisecredito.handler.exception.CreditAnalysisNotFoundException;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.mapper.CreditAnalysisMapperImpl;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
@@ -25,6 +26,7 @@ import feign.FeignException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -177,10 +179,9 @@ class CreditAnalysisServiceTest {
     void should_throw_CreditAnalysisNotFoundException_when_not_found_credit_analysis() {
         final String id = UUID.randomUUID().toString();
 
-        when(repository.findById(UUID.fromString(idArgumentCaptor.capture()))).thenThrow(FeignException.class);
+        when(repository.findById(UUID.fromString(id))).thenReturn(Optional.empty());
 
-        assertThrows(ClientNotFoundException.class, () -> service.getCreditAnalysisById(id));
-        assertEquals(id, idArgumentCaptor.getValue());
+        assertThrows(CreditAnalysisNotFoundException.class, () -> service.getCreditAnalysisById(id));
     }
 
     @Test
