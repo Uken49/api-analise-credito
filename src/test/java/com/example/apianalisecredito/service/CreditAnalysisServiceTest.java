@@ -89,8 +89,8 @@ class CreditAnalysisServiceTest {
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
-        assertEquals(BigDecimal.valueOf(2_020_49,2), creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.valueOf(202_04,2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.valueOf(1_010_25,2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(101_03,2), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
