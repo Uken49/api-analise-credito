@@ -23,6 +23,8 @@ import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import feign.FeignException;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
@@ -89,8 +91,8 @@ class CreditAnalysisServiceTest {
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
-        assertEquals(BigDecimal.valueOf(1_010_25,2), creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.valueOf(101_03,2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.valueOf(1_010_25, 2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(101_03, 2), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
@@ -113,8 +115,8 @@ class CreditAnalysisServiceTest {
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
-        assertEquals(BigDecimal.valueOf(7_500_00,2), creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.valueOf(750_00,2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.valueOf(7_500_00, 2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(750_00, 2), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
@@ -159,5 +161,17 @@ class CreditAnalysisServiceTest {
 
         assertThrows(ClientNotFoundException.class,
                 () -> service.requestCreditAnalysis(creditAnalysisRequest));
+    }
+
+    @Test
+    void should_throw_ClientNotFoundException_when_not_found_clientId() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
+
+        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
+
+        assertThrows(ClientNotFoundException.class, () -> service.requestCreditAnalysis(creditAnalysisRequest));
     }
 }
