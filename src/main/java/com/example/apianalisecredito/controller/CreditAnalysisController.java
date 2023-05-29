@@ -37,7 +37,7 @@ public class CreditAnalysisController {
 
     @GetMapping("/{idOrCpf}")
     @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse getCreditAnalysisById(@PathVariable String idOrCpf) {
+    public List<CreditAnalysisResponse> getCreditAnalysisById(@PathVariable String idOrCpf) {
         return service.getCreditAnalysisById(idOrCpf);
     }
 

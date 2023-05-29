@@ -88,10 +88,10 @@ public class CreditAnalysisService {
         return mapper.fromResponse(creditAnalysisEntitySaved);
     }
 
-    public CreditAnalysisResponse getCreditAnalysisById(String identifier) {
+    public List<CreditAnalysisResponse> getCreditAnalysisById(String identifier) {
         final int cpfSizeWithoutPunctuation = 11;
         final int cpfSizeWithPunctuation = 14;
-        final CreditAnalysisEntity creditAnalysisEntity;
+        final List<CreditAnalysisEntity> creditAnalysisEntity;
         final UUID id;
         final String analysisType;
 
@@ -104,11 +104,17 @@ public class CreditAnalysisService {
             id = UUID.fromString(identifier);
         }
 
-        creditAnalysisEntity = repository.findById(id)
-                .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada"
-                        .formatted(analysisType, identifier)));
+        creditAnalysisEntity = repository.findAllByClientId(id);
 
-        return mapper.fromResponse(creditAnalysisEntity);
+        if (creditAnalysisEntity.isEmpty()) {
+            creditAnalysisEntity.add(repository.findById(id)
+                    .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada"
+                            .formatted(analysisType, identifier))));
+        }
+
+        return creditAnalysisEntity.stream()
+                .map(mapper::fromResponse)
+                .toList();
     }
 
     public List<CreditAnalysisResponse> getAllCreditAnalysis() {
