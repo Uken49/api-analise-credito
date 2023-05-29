@@ -10,6 +10,7 @@ import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
+import com.example.apianalisecredito.util.LoggerUtil;
 import feign.FeignException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,7 +26,6 @@ public class CreditAnalysisService {
     private final CreditAnalysisRepository repository;
     private final CreditAnalysisMapper mapper;
     private final ApiClient apiClient;
-
     // Business rules
     private final BigDecimal limitPercentageToWithdraw = BigDecimal.valueOf(0.1);
     private final BigDecimal interestPerYearPercentage = BigDecimal.valueOf(15, 0);
@@ -36,11 +36,12 @@ public class CreditAnalysisService {
     private final int equalToHalfTheValue = 0;
     private final int decimalScale = 2;
 
-
     public CreditAnalysisResponse creditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
 
+        LoggerUtil.logInfo("Mapeando \"request\" para \"model\"", this.getClass());
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
         final String analysisType = "id";
+
         consultId(analysisType, creditAnalysisModel.clientId().toString());
 
         final CreditAnalysisModel creditAnalysisModelUpdated;
@@ -57,21 +58,26 @@ public class CreditAnalysisService {
         final BigDecimal monthlyIncomeConsideredValue;
 
         if (isRequestAmountGreaterThanMonthlyIncome(requestedAmount, monthlyIncome)) {
+            LoggerUtil.logInfo("Análise não aprovada", this.getClass());
             approved = false;
             withdraw = BigDecimal.valueOf(0);
             annualInterest = BigDecimal.valueOf(0);
             approvedLimit = BigDecimal.valueOf(0);
         } else {
-            monthlyIncomeConsideredValue = returnConsideredValueOfMonthlyIncome(monthlyIncome);
-
+            LoggerUtil.logInfo("Análise aprovada", this.getClass());
             approved = true;
+            monthlyIncomeConsideredValue = returnConsideredValueOfMonthlyIncome(monthlyIncome);
             approvedLimit = returnApprovedLimit(requestedAmount, monthlyIncomeConsideredValue);
             withdraw = returnWithdraw(approvedLimit);
             annualInterest = interestPerYearPercentage;
         }
 
         creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(approved, approvedLimit, withdraw, annualInterest);
+
+        LoggerUtil.logInfo("Mapeando \"model\" para \"entity\"", this.getClass());
         creditAnalysisEntity = mapper.fromEntity(creditAnalysisModelUpdated);
+
+        LoggerUtil.logInfo("Usando método \"save\"", this.getClass());
         creditAnalysisEntitySaved = repository.save(creditAnalysisEntity);
 
         return mapper.fromResponse(creditAnalysisEntitySaved);
@@ -85,42 +91,50 @@ public class CreditAnalysisService {
         final String analysisType;
 
         if (identifier.length() == cpfSizeWithoutPunctuation || identifier.length() == cpfSizeWithPunctuation) {
+            LoggerUtil.logInfo("Variável \"identifier\" é um CPF", this.getClass());
             analysisType = "cpf";
             final ApiClientDto clientById = consultId(analysisType, identifier);
             id = clientById.id();
         } else {
+            LoggerUtil.logInfo("Variável \"identifier\" é um Id", this.getClass());
             analysisType = "id";
             id = UUID.fromString(identifier);
         }
 
+        LoggerUtil.logInfo("Variável \"identifier\" é um Id", this.getClass());
+
+        LoggerUtil.logInfo("Buscando análises pelo ID do cliente", this.getClass());
         creditAnalysisEntity = repository.findAllByClientId(id);
 
         if (creditAnalysisEntity.isEmpty()) {
-            creditAnalysisEntity.add(repository.findById(id)
-                    .orElseThrow(() -> new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada"
-                            .formatted(analysisType, identifier))));
+            LoggerUtil.logInfo("Buscando análise pelo ID da análise", this.getClass());
+
+            creditAnalysisEntity.add(repository.findById(id).orElseThrow(() -> {
+                LoggerUtil.logError("Lançando exception de análise não encontrada", this.getClass());
+                throw new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada".formatted(analysisType, identifier));
+            }));
         }
 
-        return creditAnalysisEntity.stream()
-                .map(mapper::fromResponse)
-                .toList();
+        return creditAnalysisEntity.stream().map(mapper::fromResponse).toList();
     }
 
     public List<CreditAnalysisResponse> getAllCreditAnalysis() {
-        return repository.findAll().stream()
-                .map(mapper::fromResponse)
-                .toList();
+        LoggerUtil.logError("Buscando todas as análises", this.getClass());
+        return repository.findAll().stream().map(mapper::fromResponse).toList();
     }
 
     private ApiClientDto consultId(String analysisType, String identifier) {
         try {
+            LoggerUtil.logInfo("Consultando id do cliente na outra API", this.getClass());
             return apiClient.getClientByIdOrCpf(identifier);
         } catch (FeignException fe) {
+            LoggerUtil.logError("Lançando exception de cliente não encontrado", this.getClass());
             throw new ClientNotFoundException("Cliente com %s: %s não foi encontrado".formatted(analysisType, identifier));
         }
     }
 
     private boolean isRequestAmountGreaterThanMonthlyIncome(BigDecimal requestedAmount, BigDecimal monthlyIncome) {
+        LoggerUtil.logInfo("Analisando se \"requestAmount\" é maior que \"monthlyIncome\"", this.getClass());
         return requestedAmount.compareTo(monthlyIncome) > equalToHalfTheValue;
     }
 
@@ -133,6 +147,7 @@ public class CreditAnalysisService {
             monthlyIncomeConsideredValue = monthlyIncome;
         }
 
+        LoggerUtil.logInfo("Valor de monthlyIncome para análise será: %s".formatted(monthlyIncomeConsideredValue), this.getClass());
         return monthlyIncomeConsideredValue;
     }
 
@@ -142,15 +157,18 @@ public class CreditAnalysisService {
         if (requestedAmount.compareTo(monthlyIncome.multiply(percentageForCreditAnalysis)) > equalToHalfTheValue) {
             approvedLimit = monthlyIncome.multiply(ifRequestedValueIsGreaterThan50).setScale(decimalScale, RoundingMode.HALF_UP);
         } else {
-            approvedLimit =
-                    monthlyIncome.multiply(ifTheRequestedValueIsLessThanOrEqual50).setScale(decimalScale, RoundingMode.HALF_UP);
+            approvedLimit = monthlyIncome.multiply(ifTheRequestedValueIsLessThanOrEqual50).setScale(decimalScale, RoundingMode.HALF_UP);
         }
 
+        LoggerUtil.logInfo("Valor de approvedLimit é: %s".formatted(approvedLimit), this.getClass());
         return approvedLimit;
     }
 
     private BigDecimal returnWithdraw(BigDecimal approvedLimit) {
-        return approvedLimit.multiply(limitPercentageToWithdraw).setScale(decimalScale, RoundingMode.HALF_UP);
+        final BigDecimal withdraw = approvedLimit.multiply(limitPercentageToWithdraw).setScale(decimalScale, RoundingMode.HALF_UP);
+
+        LoggerUtil.logInfo("Valor de withdraw é: %s".formatted(withdraw), this.getClass());
+        return withdraw;
     }
 
 }
