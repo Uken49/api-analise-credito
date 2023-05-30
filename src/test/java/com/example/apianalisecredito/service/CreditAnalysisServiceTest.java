@@ -126,6 +126,29 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
+    void should_do_credit_analysis_when_monthlyIncome_is_less_than_maxAmountOfMonthlyIncomeConsidered() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(8_594.24);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(5_123.21);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
+        final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
+        final ApiClientDto apiClientDto = dtoWithId();
+
+        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
+
+        service.creditAnalysis(creditAnalysisRequest);
+        final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
+
+        assertTrue(creditAnalysisEntityCapture.getApproved());
+        assertEquals(BigDecimal.valueOf(1_289_14, 2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(128_91, 2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
+        assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
+        assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
+    }
+
+    @Test
     void should_refuse_credit_analysis_with_requestAmount_greater_than_monthlyIncome() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
         final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
@@ -170,7 +193,7 @@ class CreditAnalysisServiceTest {
     void should_return_an_empty_credit_analysis_list() {
 
         when(repository.findAll()).thenReturn(Collections.emptyList());
-        List<CreditAnalysisResponse> allCreditAnalysis = service.getAllCreditAnalysis();
+        final List<CreditAnalysisResponse> allCreditAnalysis = service.getAllCreditAnalysis();
 
         assertTrue(allCreditAnalysis.isEmpty());
     }
