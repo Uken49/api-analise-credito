@@ -95,7 +95,7 @@ class CreditAnalysisServiceTest {
 
         assertTrue(creditAnalysisEntityCapture.getApproved());
         assertEquals(BigDecimal.valueOf(1_010_25, 2), creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.valueOf(101_03, 2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.valueOf(101_02, 2), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
@@ -169,8 +169,8 @@ class CreditAnalysisServiceTest {
         assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
 
         assertFalse(creditAnalysisEntityCapture.getApproved());
-        assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.ZERO, creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.ZERO.setScale(2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.ZERO.setScale(2), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(BigDecimal.valueOf(0), creditAnalysisEntityCapture.getAnnualInterest());
@@ -195,18 +195,6 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
-    void should_throw_ClientNotFoundException_when_not_found_clientId() {
-        final BigDecimal monthlyIncome = BigDecimal.valueOf(87_594.24);
-        final BigDecimal requestedAmount = BigDecimal.valueOf(75_123.21);
-
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
-
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
-
-        assertThrows(ClientNotFoundException.class, () -> service.creditAnalysis(creditAnalysisRequest));
-    }
-
-    @Test
     void should_throw_ClientNotFoundException_when_idCliente_is_not_found() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
         final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
@@ -216,7 +204,8 @@ class CreditAnalysisServiceTest {
         when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
 
         assertThrows(ClientNotFoundException.class,
-                () -> service.creditAnalysis(creditAnalysisRequest));
+                () -> service.creditAnalysis(creditAnalysisRequest), "Cliente com id: %s não foi encontrado".formatted(creditAnalysisRequest.clientId()));
+        assertEquals(creditAnalysisRequest.clientId().toString(), idArgumentCaptor.getValue());
     }
 
 }

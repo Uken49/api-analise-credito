@@ -48,8 +48,8 @@ public class CreditAnalysisService {
         final CreditAnalysisEntity creditAnalysisEntity;
         final CreditAnalysisEntity creditAnalysisEntitySaved;
 
-        final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount().setScale(decimalScale, RoundingMode.HALF_UP);
-        final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome().setScale(decimalScale, RoundingMode.HALF_UP);
+        final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount();
+        final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome();
 
         final boolean approved;
         final BigDecimal approvedLimit;
@@ -72,7 +72,12 @@ public class CreditAnalysisService {
             annualInterest = interestPerYearPercentage;
         }
 
-        creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(approved, approvedLimit, withdraw, annualInterest);
+        creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(
+                approved,
+                approvedLimit.setScale(decimalScale, RoundingMode.HALF_UP),
+                withdraw.setScale(decimalScale, RoundingMode.HALF_UP),
+                annualInterest
+        );
 
         LoggerUtil.logInfo("Mapeando \"model\" para \"entity\"", this.getClass());
         creditAnalysisEntity = mapper.fromEntity(creditAnalysisModelUpdated);
@@ -155,9 +160,9 @@ public class CreditAnalysisService {
         final BigDecimal approvedLimit;
 
         if (requestedAmount.compareTo(monthlyIncome.multiply(percentageForCreditAnalysis)) > equalToHalfTheValue) {
-            approvedLimit = monthlyIncome.multiply(ifRequestedValueIsGreaterThan50).setScale(decimalScale, RoundingMode.HALF_UP);
+            approvedLimit = monthlyIncome.multiply(ifRequestedValueIsGreaterThan50);
         } else {
-            approvedLimit = monthlyIncome.multiply(ifTheRequestedValueIsLessThanOrEqual50).setScale(decimalScale, RoundingMode.HALF_UP);
+            approvedLimit = monthlyIncome.multiply(ifTheRequestedValueIsLessThanOrEqual50);
         }
 
         LoggerUtil.logInfo("Valor de approvedLimit é: %s".formatted(approvedLimit), this.getClass());
@@ -165,7 +170,7 @@ public class CreditAnalysisService {
     }
 
     private BigDecimal returnWithdraw(BigDecimal approvedLimit) {
-        final BigDecimal withdraw = approvedLimit.multiply(limitPercentageToWithdraw).setScale(decimalScale, RoundingMode.HALF_UP);
+        final BigDecimal withdraw = approvedLimit.multiply(limitPercentageToWithdraw);
 
         LoggerUtil.logInfo("Valor de withdraw é: %s".formatted(withdraw), this.getClass());
         return withdraw;
