@@ -177,19 +177,6 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
-    void should_throw_ClientNotFoundException_when_idCliente_is_not_found() {
-        final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
-        final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
-
-        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
-
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
-
-        assertThrows(ClientNotFoundException.class,
-                () -> service.creditAnalysis(creditAnalysisRequest));
-    }
-
-    @Test
     void should_return_an_empty_credit_analysis_list() {
 
         when(repository.findAll()).thenReturn(Collections.emptyList());
@@ -218,4 +205,18 @@ class CreditAnalysisServiceTest {
 
         assertThrows(ClientNotFoundException.class, () -> service.creditAnalysis(creditAnalysisRequest));
     }
+
+    @Test
+    void should_throw_ClientNotFoundException_when_idCliente_is_not_found() {
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(10_000.00);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(12_150.49);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
+
+        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
+
+        assertThrows(ClientNotFoundException.class,
+                () -> service.creditAnalysis(creditAnalysisRequest));
+    }
+
 }
