@@ -41,6 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+// Algumas condições sem ser testada, analisar o relatorio do jacoco
 class CreditAnalysisServiceTest {
 
     @Mock

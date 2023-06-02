@@ -12,11 +12,11 @@ public class LoggerUtil {
         throw new IllegalAccessException("Class is utility");
     }
 
-    public static void logInfo(String message, Class c) {
+    public static void logInfo(String message, Class<?> c) {
         LOGGER.info(message, c);
     }
 
-    public static void logError(String message, Class c) {
+    public static void logError(String message, Class<?> c) {
         LOGGER.error(message, c);
     }
 

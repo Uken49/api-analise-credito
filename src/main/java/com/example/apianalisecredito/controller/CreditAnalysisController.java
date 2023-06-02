@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class CreditAnalysisController {
 
     private final CreditAnalysisService service;
+
+    // Para constantes utilize static final, e constantes precisa ser em uppercase, esta relacionado a conveções de nomes quando estudaram java
     private final String loggerServiceMessage = "Entrando na service";
 
     @PostMapping
@@ -28,6 +30,7 @@ public class CreditAnalysisController {
     public CreditAnalysisResponse requestCreditAnalysis(
             @RequestBody CreditAnalysisRequest creditAnalysisRequest
     ) {
+        // Este log é desnecessário
         LoggerUtil.logInfo("", this.getClass());
         return service.creditAnalysis(creditAnalysisRequest);
     }
@@ -35,13 +38,17 @@ public class CreditAnalysisController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<CreditAnalysisResponse> getAllCreditAnalysis() {
+        // Este log é desnecessário
         LoggerUtil.logInfo(loggerServiceMessage, this.getClass());
         return service.getAllCreditAnalysis();
     }
 
+    // O path é referente ao recurso.
+    // Um atributo não deveria ter dois significados, e para este caso em especial esta incorreto, separe em dois endpoints
     @GetMapping("/{idOrCpf}")
     @ResponseStatus(HttpStatus.OK)
     public List<CreditAnalysisResponse> getCreditAnalysisById(@PathVariable String idOrCpf) {
+        // Este log é desnecessário
         LoggerUtil.logInfo(loggerServiceMessage, this.getClass());
         return service.getCreditAnalysisById(idOrCpf);
     }
