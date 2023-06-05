@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS CREDITY_ANALYSIS (
     id UUID PRIMARY KEY,
     approved BOOLEAN,
-    approved_limit DECIMAL(10, 2),
-    withdraw DECIMAL(10, 2),
-    monthly_income DECIMAL(10, 2),
-    requested_amount DECIMAL(10, 2),
-    annual_interest DECIMAL(5, 2),
+    approved_limit DOUBLE PRECISION,
+    withdraw DOUBLE PRECISION,
+    monthly_income DOUBLE PRECISION,
+    requested_amount DOUBLE PRECISION,
+    annual_interest DOUBLE PRECISION,
     client_id UUID NOT NULL,
-    date DATE
+    date TIMESTAMP
 );

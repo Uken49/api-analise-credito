@@ -3,7 +3,8 @@ package com.example.apianalisecredito.controller;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.service.CreditAnalysisService;
-import java.util.UUID;
+import com.example.apianalisecredito.util.LoggerUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,29 +22,35 @@ public class CreditAnalysisController {
 
     private final CreditAnalysisService service;
 
+    // Para constantes utilize static final, e constantes precisa ser em uppercase, esta relacionado a conveções de nomes quando estudaram java
+    private final String loggerServiceMessage = "Entrando na service";
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CreditAnalysisResponse requestCreditAnalysis(
             @RequestBody CreditAnalysisRequest creditAnalysisRequest
     ) {
-        return service.requestCreditAnalysis(creditAnalysisRequest);
+        // Este log é desnecessário
+        LoggerUtil.logInfo("", this.getClass());
+        return service.creditAnalysis(creditAnalysisRequest);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse listCreditAnalysis() {
-        return null;
+    public List<CreditAnalysisResponse> getAllCreditAnalysis() {
+        // Este log é desnecessário
+        LoggerUtil.logInfo(loggerServiceMessage, this.getClass());
+        return service.getAllCreditAnalysis();
     }
 
-    @GetMapping("/{id}")
+    // O path é referente ao recurso.
+    // Um atributo não deveria ter dois significados, e para este caso em especial esta incorreto, separe em dois endpoints
+    @GetMapping("/{idOrCpf}")
     @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse getCreditAnalysisById(@PathVariable UUID id) {
-        return null;
+    public List<CreditAnalysisResponse> getCreditAnalysisById(@PathVariable String idOrCpf) {
+        // Este log é desnecessário
+        LoggerUtil.logInfo(loggerServiceMessage, this.getClass());
+        return service.getCreditAnalysisById(idOrCpf);
     }
 
-    @GetMapping("/{cpf}")
-    @ResponseStatus(HttpStatus.OK)
-    public CreditAnalysisResponse getCreditAnalysisByCpf(@PathVariable Integer cpf) {
-        return null;
-    }
 }

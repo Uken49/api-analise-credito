@@ -2,13 +2,16 @@ package com.example.apianalisecredito.repository.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.Builder;
 import org.hibernate.annotations.Immutable;
 
 @Entity
 @Immutable
+@Table(name = "CREDITY_ANALYSIS")
 public class CreditAnalysisEntity {
     @Id
     UUID id;
@@ -21,6 +24,12 @@ public class CreditAnalysisEntity {
     UUID clientId;
     LocalDateTime date;
 
+    // ESte construtor não é utilizado
+    public CreditAnalysisEntity() {
+        this.id = UUID.randomUUID();
+    }
+
+    @Builder(toBuilder = true)
     public CreditAnalysisEntity(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome, BigDecimal requestedAmount,
                                 BigDecimal annualInterest, UUID clientId) {
         this.id = UUID.randomUUID();

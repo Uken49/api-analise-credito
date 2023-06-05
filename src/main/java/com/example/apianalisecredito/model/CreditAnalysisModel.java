@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Builder;
 
+@Builder(toBuilder = true)
 public record CreditAnalysisModel(
         Boolean approved,
         BigDecimal approvedLimit,
@@ -11,20 +12,9 @@ public record CreditAnalysisModel(
         BigDecimal monthlyIncome,
         BigDecimal requestedAmount,
         BigDecimal annualInterest,
-        UUID clientId
+        UUID clientId,
+        String cpf
 ) {
-
-    @Builder(toBuilder = true)
-    public CreditAnalysisModel(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal monthlyIncome, BigDecimal requestedAmount,
-                               BigDecimal annualInterest, UUID clientId) {
-        this.approved = approved;
-        this.approvedLimit = approvedLimit;
-        this.withdraw = withdraw;
-        this.monthlyIncome = monthlyIncome;
-        this.requestedAmount = requestedAmount;
-        this.annualInterest = annualInterest;
-        this.clientId = clientId;
-    }
 
     public CreditAnalysisModel creditAnalysisUpdate(Boolean approved, BigDecimal approvedLimit, BigDecimal withdraw, BigDecimal annualInterest) {
         return this.toBuilder()
