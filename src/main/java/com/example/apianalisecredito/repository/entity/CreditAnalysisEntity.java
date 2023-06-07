@@ -24,7 +24,6 @@ public class CreditAnalysisEntity {
     UUID clientId;
     LocalDateTime date;
 
-    // ESte construtor não é utilizado
     public CreditAnalysisEntity() {
         this.id = UUID.randomUUID();
     }
@@ -42,7 +41,7 @@ public class CreditAnalysisEntity {
         this.clientId = clientId;
         this.date = LocalDateTime.now();
     }
-
+    
     public UUID getId() {
         return id;
     }

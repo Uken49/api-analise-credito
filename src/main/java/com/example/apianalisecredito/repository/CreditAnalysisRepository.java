@@ -1,11 +1,8 @@
 package com.example.apianalisecredito.repository;
 
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
-import java.util.List;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
-public interface CreditAnalysisRepository extends JpaRepository<CreditAnalysisEntity, UUID> {
-
-    List<CreditAnalysisEntity> findAllByClientId(UUID id);
+public interface CreditAnalysisRepository extends CrudRepository<CreditAnalysisEntity, UUID> {
 }
