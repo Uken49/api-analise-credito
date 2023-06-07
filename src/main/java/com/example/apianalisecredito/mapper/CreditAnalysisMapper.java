@@ -5,8 +5,9 @@ import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.NullValueMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 public interface CreditAnalysisMapper {
 
     CreditAnalysisModel fromModel(CreditAnalysisRequest creditAnalysisRequest);

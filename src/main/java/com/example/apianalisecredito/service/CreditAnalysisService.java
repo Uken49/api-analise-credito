@@ -10,7 +10,6 @@ import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
-import com.example.apianalisecredito.util.LoggerUtil;
 import feign.FeignException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,37 +22,21 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CreditAnalysisService {
 
+    private static final BigDecimal LIMIT_PERCENTAGE_TO_WITHDRAW = BigDecimal.valueOf(0.1);
+    private static final BigDecimal INTEREST_PER_YEAR_PERCENTAGE = BigDecimal.valueOf(15, 0);
+    private static final BigDecimal MAX_AMOUNT_OF_MONTHLY_INCOME_CONSIDERED = BigDecimal.valueOf(50_000_00, 2);
+    private static final BigDecimal REQUESTED_VALUE_IS_GREATER_THAN_50 = BigDecimal.valueOf(0.15);
+    private static final BigDecimal REQUESTED_VALUE_IS_LESS_THAN_OR_EQUAL_50 = BigDecimal.valueOf(0.3);
+    private static final BigDecimal PERCENTAGE_FOR_CREDIT_ANALYSIS = BigDecimal.valueOf(0.5);
+    private static final int DECIMAL_SCALE = 2;
     private final CreditAnalysisRepository repository;
     private final CreditAnalysisMapper mapper;
     private final ApiClient apiClient;
-    // Business rules
-
-    // Nomes de constrantes fora do padrão uppercase
-    private final BigDecimal limitPercentageToWithdraw = BigDecimal.valueOf(0.1);
-    private final BigDecimal interestPerYearPercentage = BigDecimal.valueOf(15, 0);
-    private final BigDecimal maxAmountOfMonthlyIncomeConsidered = BigDecimal.valueOf(50_000_00, 2);
-     // melhor colocar no nome apenas o que o campo significa, caso contrario fica confuso
-    private final BigDecimal ifRequestedValueIsGreaterThan50 = BigDecimal.valueOf(0.15);
-    private final BigDecimal ifTheRequestedValueIsLessThanOrEqual50 = BigDecimal.valueOf(0.3);
-    private final BigDecimal percentageForCreditAnalysis = BigDecimal.valueOf(0.5);
-    // Esta constante é necessaria?
-    private final int equalToHalfTheValue = 0;
-    private final int decimalScale = 2;
 
     public CreditAnalysisResponse creditAnalysis(CreditAnalysisRequest creditAnalysisRequest) {
-        // Este log é desnecessario
-        LoggerUtil.logInfo("Mapeando \"request\" para \"model\"", this.getClass());
         final CreditAnalysisModel creditAnalysisModel = mapper.fromModel(creditAnalysisRequest);
-        final String analysisType = "id";
 
-        //crie métodos especificos, isso deixa o codigo confuso e acoplado
-        //consulta o que por id? se é por id pq passar o o tipo id?
-        consultId(analysisType, creditAnalysisModel.clientId().toString());
-
-        // Declare os atributos onde serão utilizados, facilita a leitura do codigo
-        final CreditAnalysisModel creditAnalysisModelUpdated;
-        final CreditAnalysisEntity creditAnalysisEntity;
-        final CreditAnalysisEntity creditAnalysisEntitySaved;
+        consultClientBy("id", creditAnalysisModel.clientId().toString());
 
         final BigDecimal requestedAmount = creditAnalysisModel.requestedAmount();
         final BigDecimal monthlyIncome = creditAnalysisModel.monthlyIncome();
@@ -62,144 +45,98 @@ public class CreditAnalysisService {
         final BigDecimal approvedLimit;
         final BigDecimal withdraw;
         final BigDecimal annualInterest;
-        final BigDecimal monthlyIncomeConsideredValue;
 
         if (isRequestAmountGreaterThanMonthlyIncome(requestedAmount, monthlyIncome)) {
-            // Este log é desnecessário
-            LoggerUtil.logInfo("Análise não aprovada", this.getClass());
             approved = false;
             withdraw = BigDecimal.valueOf(0);
             annualInterest = BigDecimal.valueOf(0);
             approvedLimit = BigDecimal.valueOf(0);
         } else {
-            // Este log é desnecessário
-            LoggerUtil.logInfo("Análise aprovada", this.getClass());
             approved = true;
-            monthlyIncomeConsideredValue = returnConsideredValueOfMonthlyIncome(monthlyIncome);
-            approvedLimit = returnApprovedLimit(requestedAmount, monthlyIncomeConsideredValue);
-            withdraw = returnWithdraw(approvedLimit);
-            annualInterest = interestPerYearPercentage;
+
+            final BigDecimal monthlyIncomeConsideredValue;
+
+            monthlyIncomeConsideredValue = calculateConsideredValueOfMonthlyIncome(monthlyIncome);
+            approvedLimit = calculatesApprovedLimit(requestedAmount, monthlyIncomeConsideredValue);
+            withdraw = calculatesWithdraw(approvedLimit);
+            annualInterest = INTEREST_PER_YEAR_PERCENTAGE;
         }
 
-        creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(
+        final CreditAnalysisModel creditAnalysisModelUpdated = creditAnalysisModel.creditAnalysisUpdate(
                 approved,
-                approvedLimit.setScale(decimalScale, RoundingMode.HALF_UP),
-                withdraw.setScale(decimalScale, RoundingMode.HALF_UP),
+                approvedLimit.setScale(DECIMAL_SCALE, RoundingMode.HALF_UP),
+                withdraw.setScale(DECIMAL_SCALE, RoundingMode.HALF_UP),
                 annualInterest
         );
 
-        // Este log é desnecessário
-        LoggerUtil.logInfo("Mapeando \"model\" para \"entity\"", this.getClass());
-        creditAnalysisEntity = mapper.fromEntity(creditAnalysisModelUpdated);
+        final CreditAnalysisEntity creditAnalysisEntity = mapper.fromEntity(creditAnalysisModelUpdated);
 
-        // Este log é desnecessário
-        LoggerUtil.logInfo("Usando método \"save\"", this.getClass());
-        creditAnalysisEntitySaved = repository.save(creditAnalysisEntity);
+        final CreditAnalysisEntity creditAnalysisEntitySaved = repository.save(creditAnalysisEntity);
 
         return mapper.fromResponse(creditAnalysisEntitySaved);
     }
 
-    public List<CreditAnalysisResponse> getCreditAnalysisById(String identifier) {
-        final int cpfSizeWithoutPunctuation = 11;
-        final int cpfSizeWithPunctuation = 14;
-        final List<CreditAnalysisEntity> creditAnalysisEntity;
-        final UUID id;
-        final String analysisType;
+    public List<CreditAnalysisResponse> getCreditAnalysisByClientCpf(String identifier) {
 
-        // Não faça isso rs, toda essa logica é para o problema de um campo ter dois significados
-        // não há uma validação de cpf
-        if (identifier.length() == cpfSizeWithoutPunctuation || identifier.length() == cpfSizeWithPunctuation) {
-            // Este log é desnecessario
-            LoggerUtil.logInfo("Variável \"identifier\" é um CPF", this.getClass());
-            analysisType = "cpf";
-            final ApiClientDto clientById = consultId(analysisType, identifier);
-            id = clientById.id();
-        } else {
-            // Este log é desnecessario
-            LoggerUtil.logInfo("Variável \"identifier\" é um Id", this.getClass());
-            analysisType = "id";
-            // se receber um id invalido seu codigo vai quebrar aqui
-            id = UUID.fromString(identifier);
-        }
+        final UUID id = consultClientBy("cpf", identifier).id();
 
-        // Este log é desnecessario
-        LoggerUtil.logInfo("Variável \"identifier\" é um Id", this.getClass());
+        final List<CreditAnalysisEntity> creditAnalysisEntities = repository.findAllByClientId(id);
 
-        // Este log é desnecessario
-        LoggerUtil.logInfo("Buscando análises pelo ID do cliente", this.getClass());
-        creditAnalysisEntity = repository.findAllByClientId(id);
+        return creditAnalysisEntities.stream().map(mapper::fromResponse).toList();
+    }
 
-        if (creditAnalysisEntity.isEmpty()) {
-            LoggerUtil.logInfo("Buscando análise pelo ID da análise", this.getClass());
-            // Se o id passado for da analise tera feito uma consulta por nada, uma das operações mais caras em um sistema é o IO
-            creditAnalysisEntity.add(repository.findById(id).orElseThrow(() -> {
-                LoggerUtil.logError("Lançando exception de análise não encontrada", this.getClass());
-                throw new CreditAnalysisNotFoundException("Análise com %s: %s não foi encontrada".formatted(analysisType, identifier));
-            }));
-        }
+    public List<CreditAnalysisResponse> getCreditAnalysisByClientId(UUID id) {
 
-        // É incorreto retornar uma lista quando é feita uma consulta pelo id da analise
+        final List<CreditAnalysisEntity> creditAnalysisEntity = repository.findAllByClientId(id);
+
         return creditAnalysisEntity.stream().map(mapper::fromResponse).toList();
     }
 
+    public CreditAnalysisResponse getCreditAnalysisById(UUID id) {
+
+        final CreditAnalysisEntity creditAnalysisEntity = repository.findById(id).orElseThrow(
+                () -> new CreditAnalysisNotFoundException("Análise com id: %s não foi encontrado".formatted(id))
+        );
+
+        return mapper.fromResponse(creditAnalysisEntity);
+    }
+
     public List<CreditAnalysisResponse> getAllCreditAnalysis() {
-        // Este log é desnecessário
-        LoggerUtil.logError("Buscando todas as análises", this.getClass());
         return repository.findAll().stream().map(mapper::fromResponse).toList();
     }
 
-    private ApiClientDto consultId(String analysisType, String identifier) {
+    private ApiClientDto consultClientBy(String analysisType, String identifier) {
         try {
-            // Este log é desnecessário
-            LoggerUtil.logInfo("Consultando id do cliente na outra API", this.getClass());
-            return apiClient.getClientByIdOrCpf(identifier);
+            return apiClient.getClientBy(identifier);
         } catch (FeignException fe) {
-            // Este log é desnecessário
-            LoggerUtil.logError("Lançando exception de cliente não encontrado", this.getClass());
             throw new ClientNotFoundException("Cliente com %s: %s não foi encontrado".formatted(analysisType, identifier));
         }
     }
 
     private boolean isRequestAmountGreaterThanMonthlyIncome(BigDecimal requestedAmount, BigDecimal monthlyIncome) {
-        // Este log é desnecessário
-        LoggerUtil.logInfo("Analisando se \"requestAmount\" é maior que \"monthlyIncome\"", this.getClass());
-        return requestedAmount.compareTo(monthlyIncome) > equalToHalfTheValue;
+        return requestedAmount.compareTo(monthlyIncome) > 0;
     }
 
-    // Evite utilizar palavras reservadas nos nomes de metodos
-    private BigDecimal returnConsideredValueOfMonthlyIncome(BigDecimal monthlyIncome) {
-        final BigDecimal monthlyIncomeConsideredValue;
-        // Aqui não precisa do if else
-        if (monthlyIncome.compareTo(maxAmountOfMonthlyIncomeConsidered) > equalToHalfTheValue) {
-            monthlyIncomeConsideredValue = maxAmountOfMonthlyIncomeConsidered;
-        } else {
-            monthlyIncomeConsideredValue = monthlyIncome;
+    private BigDecimal calculateConsideredValueOfMonthlyIncome(BigDecimal monthlyIncome) {
+
+        if (monthlyIncome.compareTo(MAX_AMOUNT_OF_MONTHLY_INCOME_CONSIDERED) > 0) {
+            return MAX_AMOUNT_OF_MONTHLY_INCOME_CONSIDERED;
         }
 
-        // Este log é desnecessário
-        LoggerUtil.logInfo("Valor de monthlyIncome para análise será: %s".formatted(monthlyIncomeConsideredValue), this.getClass());
-        return monthlyIncomeConsideredValue;
+        return monthlyIncome;
     }
 
-    // metodo calculaLimteCredito
-    private BigDecimal returnApprovedLimit(BigDecimal requestedAmount, BigDecimal monthlyIncome) {
-        final BigDecimal approvedLimit;
+    private BigDecimal calculatesApprovedLimit(BigDecimal requestedAmount, BigDecimal monthlyIncome) {
 
-        if (requestedAmount.compareTo(monthlyIncome.multiply(percentageForCreditAnalysis)) > equalToHalfTheValue) {
-            approvedLimit = monthlyIncome.multiply(ifRequestedValueIsGreaterThan50);
-        } else {
-            approvedLimit = monthlyIncome.multiply(ifTheRequestedValueIsLessThanOrEqual50);
+        if (requestedAmount.compareTo(monthlyIncome.multiply(PERCENTAGE_FOR_CREDIT_ANALYSIS)) > 0) {
+            return monthlyIncome.multiply(REQUESTED_VALUE_IS_GREATER_THAN_50);
         }
-        // log desnecessario
-        LoggerUtil.logInfo("Valor de approvedLimit é: %s".formatted(approvedLimit), this.getClass());
-        return approvedLimit;
+
+        return monthlyIncome.multiply(REQUESTED_VALUE_IS_LESS_THAN_OR_EQUAL_50);
     }
 
-    private BigDecimal returnWithdraw(BigDecimal approvedLimit) {
-        final BigDecimal withdraw = approvedLimit.multiply(limitPercentageToWithdraw);
-        // log desnecessario
-        LoggerUtil.logInfo("Valor de withdraw é: %s".formatted(withdraw), this.getClass());
-        return withdraw;
+    private BigDecimal calculatesWithdraw(BigDecimal approvedLimit) {
+        return approvedLimit.multiply(LIMIT_PERCENTAGE_TO_WITHDRAW);
     }
 
 }

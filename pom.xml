@@ -98,6 +98,14 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<excludes>
+						<exclude>com/example/apianalisecredito/ApiAnaliseCreditoApplication.class</exclude>
+						<exclude>com/example/apianalisecredito/**/HandlerExceptionAdvice.class</exclude>
+						<exclude>com/example/apianalisecredito/**/CreditAnalysisController.class</exclude>
+						<exclude>com/example/apianalisecredito/**/LoggerUtil.class</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
