@@ -7,13 +7,14 @@ import static com.example.apianalisecredito.factory.CreditAnalysisFactory.reques
 import static com.example.apianalisecredito.factory.CreditAnalysisFactory.requestAmountLessThanMonthlyIncome;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.example.apianalisecredito.apiclient.ApiClient;
-import com.example.apianalisecredito.apiclient.dto.ApiClientDto;
 import com.example.apianalisecredito.controller.request.CreditAnalysisRequest;
 import com.example.apianalisecredito.controller.response.CreditAnalysisResponse;
 import com.example.apianalisecredito.handler.exception.ClientNotFoundException;
@@ -24,6 +25,7 @@ import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
 import feign.FeignException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +43,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-// Algumas condições sem ser testada, analisar o relatorio do jacoco
 class CreditAnalysisServiceTest {
 
     @Mock
@@ -53,7 +54,9 @@ class CreditAnalysisServiceTest {
     @InjectMocks
     private CreditAnalysisService service;
     @Captor
-    private ArgumentCaptor<String> idArgumentCaptor;
+    private ArgumentCaptor<UUID> idArgumentCaptor;
+    @Captor
+    private ArgumentCaptor<String> cpfArgumentCaptor;
     @Captor
     private ArgumentCaptor<CreditAnalysisEntity> creditAnalysisEntityArgumentCaptor;
 
@@ -64,16 +67,15 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityRequestAmountGreaterThanMonthlyIncome();
-        final ApiClientDto apiClientDto = dtoWithId();
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
         final CreditAnalysisResponse creditAnalysisResponse = service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertNotNull(creditAnalysisResponse);
-        assertEquals(idArgumentCaptor.getValue(), creditAnalysisRequest.clientId().toString());
+        assertEquals(idArgumentCaptor.getValue(), creditAnalysisRequest.clientId());
         assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
         assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
@@ -86,9 +88,8 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
-        final ApiClientDto apiClientDto = dtoWithId();
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
         service.creditAnalysis(creditAnalysisRequest);
@@ -110,9 +111,8 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
-        final ApiClientDto apiClientDto = dtoWithId();
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
         service.creditAnalysis(creditAnalysisRequest);
@@ -127,15 +127,36 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
+    void should_do_the_analysis_with_request_value_equal_to_50_percent(){
+        final BigDecimal monthlyIncome = BigDecimal.valueOf(30_594.24);
+        final BigDecimal requestedAmount = BigDecimal.valueOf(15_297.12);
+
+        final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
+        final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
+
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
+        when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
+
+        service.creditAnalysis(creditAnalysisRequest);
+        final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
+
+        assertTrue(creditAnalysisEntityCapture.getApproved());
+        assertEquals(BigDecimal.valueOf(9_178_27, 2), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.valueOf(917_83, 2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(monthlyIncome, creditAnalysisEntityCapture.getMonthlyIncome());
+        assertEquals(requestedAmount, creditAnalysisEntityCapture.getRequestedAmount());
+        assertEquals(BigDecimal.valueOf(15), creditAnalysisEntityCapture.getAnnualInterest());
+    }
+
+    @Test
     void should_do_credit_analysis_when_monthlyIncome_is_less_than_maxAmountOfMonthlyIncomeConsidered() {
         final BigDecimal monthlyIncome = BigDecimal.valueOf(8_594.24);
         final BigDecimal requestedAmount = BigDecimal.valueOf(5_123.21);
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
-        final ApiClientDto apiClientDto = dtoWithId();
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
         service.creditAnalysis(creditAnalysisRequest);
@@ -156,22 +177,21 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountGreaterThanMonthlyIncome(monthlyIncome, requestedAmount);
         final CreditAnalysisEntity creditAnalysisEntity = entityNotApproved();
-        final ApiClientDto apiClientDto = dtoWithId();
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenReturn(apiClientDto);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(dtoWithId());
         when(repository.save(creditAnalysisEntityArgumentCaptor.capture())).thenReturn(creditAnalysisEntity);
 
         service.creditAnalysis(creditAnalysisRequest);
         final CreditAnalysisEntity creditAnalysisEntityCapture = creditAnalysisEntityArgumentCaptor.getValue();
 
         assertNotNull(creditAnalysisEntityCapture);
-        assertEquals(idArgumentCaptor.getValue(), creditAnalysisRequest.clientId().toString());
+        assertEquals(idArgumentCaptor.getValue(), creditAnalysisRequest.clientId());
 
         assertEquals(creditAnalysisRequest.clientId(), creditAnalysisEntityCapture.getClientId());
 
         assertFalse(creditAnalysisEntityCapture.getApproved());
-        assertEquals(BigDecimal.ZERO.setScale(2), creditAnalysisEntityCapture.getApprovedLimit());
-        assertEquals(BigDecimal.ZERO.setScale(2), creditAnalysisEntityCapture.getWithdraw());
+        assertEquals(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP), creditAnalysisEntityCapture.getApprovedLimit());
+        assertEquals(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP), creditAnalysisEntityCapture.getWithdraw());
         assertEquals(creditAnalysisRequest.requestedAmount(), creditAnalysisEntityCapture.getRequestedAmount());
         assertEquals(creditAnalysisRequest.monthlyIncome(), creditAnalysisEntityCapture.getMonthlyIncome());
         assertEquals(BigDecimal.valueOf(0), creditAnalysisEntityCapture.getAnnualInterest());
@@ -187,12 +207,41 @@ class CreditAnalysisServiceTest {
     }
 
     @Test
+    void should_map_as_credit_analyses_searched_by_ClientCpf(){
+        final CreditAnalysisEntity creditAnalysisEntity = entityRequestAmountGreaterThanMonthlyIncome();
+        final String cpf = "56388145663";
+
+        when(apiClient.getClientByCpf(cpfArgumentCaptor.capture())).thenReturn(List.of(dtoWithId()));
+        when(repository.findAllByClientId(any())).thenReturn(List.of(creditAnalysisEntity));
+
+        assertInstanceOf(CreditAnalysisResponse.class, service.getCreditAnalysisByClientCpf(cpf).get(0));
+    }
+
+    @Test
+    void should_map_user_searched_by_ClientId(){
+        final CreditAnalysisEntity creditAnalysisEntity = entityRequestAmountGreaterThanMonthlyIncome();
+
+        when(repository.findAllByClientId(any())).thenReturn(List.of(creditAnalysisEntity));
+        assertInstanceOf(CreditAnalysisResponse.class, service.getCreditAnalysisByClientId(UUID.randomUUID()).get(0));
+    }
+
+    @Test
+    void should_map_user_searched_by_id() {
+        final CreditAnalysisEntity creditAnalysisEntity = entityRequestAmountGreaterThanMonthlyIncome();
+        final UUID id = creditAnalysisEntity.getClientId();
+
+        when(repository.findById(id)).thenReturn(Optional.of(creditAnalysisEntity));
+
+        assertInstanceOf(CreditAnalysisResponse.class, service.getCreditAnalysisById(id));
+    }
+
+    @Test
     void should_throw_CreditAnalysisNotFoundException_when_not_found_credit_analysis() {
-        final String id = UUID.randomUUID().toString();
+        final UUID id = UUID.randomUUID();
 
-        when(repository.findById(UUID.fromString(id))).thenReturn(Optional.empty());
+        when(repository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(CreditAnalysisNotFoundException.class, () -> service.getCreditAnalysisById(id));
+        assertThrows(CreditAnalysisNotFoundException.class, () -> service.getCreditAnalysisById(id), "Análise com id: %s não foi encontrado");
     }
 
     @Test
@@ -202,11 +251,12 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
 
-        when(apiClient.getClientByIdOrCpf(idArgumentCaptor.capture())).thenThrow(FeignException.class);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenThrow(FeignException.class);
 
         assertThrows(ClientNotFoundException.class,
-                () -> service.creditAnalysis(creditAnalysisRequest), "Cliente com id: %s não foi encontrado".formatted(creditAnalysisRequest.clientId()));
-        assertEquals(creditAnalysisRequest.clientId().toString(), idArgumentCaptor.getValue());
+                () -> service.creditAnalysis(creditAnalysisRequest),
+                "Cliente com id: %s não foi encontrado".formatted(creditAnalysisRequest.clientId()));
+        assertEquals(creditAnalysisRequest.clientId(), idArgumentCaptor.getValue());
     }
 
 }

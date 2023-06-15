@@ -1,16 +1,17 @@
 package com.example.apianalisecredito.controller.request;
 
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
 import java.util.UUID;
+import org.hibernate.validator.constraints.br.CPF;
 
 public record CreditAnalysisRequest(
         UUID clientId,
-        @DecimalMax(value = "${validatedValue.requestedAmount}", inclusive = false, message = "monthlyIncome deve ser maior que requestedAmount")
-        @Positive(message = "monthlyIncome deve ser positivo")
+        @Min(0)
         BigDecimal monthlyIncome,
-        @Positive(message = "requestedAmount deve ser positivo")
-        BigDecimal requestedAmount
+        @Min(0)
+        BigDecimal requestedAmount,
+        @CPF
+        String cpf
 ) {
 }

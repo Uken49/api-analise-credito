@@ -17,6 +17,7 @@ spring: # Configuracao do spring
             connectTimeout: 3000
             readTimeout: 500
             loggerLevel: BASIC
+            dismiss404: true
 
   datasource:
     url: jdbc:postgresql://localhost:5433/postgres # URL da conexao, no caso, o docker na porta 5432
@@ -36,3 +37,5 @@ spring: # Configuracao do spring
     generate-ddl: false # Gerar as tabelas mapeadas com @Entity
     show-sql: true # Exibir codigos SQL no terminal
 
+url:
+  apiclient: http://localhost:8080/clients
