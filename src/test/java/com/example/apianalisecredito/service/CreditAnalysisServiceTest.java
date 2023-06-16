@@ -251,7 +251,7 @@ class CreditAnalysisServiceTest {
 
         final CreditAnalysisRequest creditAnalysisRequest = requestAmountLessThanMonthlyIncome(monthlyIncome, requestedAmount);
 
-        when(apiClient.getClientById(idArgumentCaptor.capture())).thenThrow(FeignException.class);
+        when(apiClient.getClientById(idArgumentCaptor.capture())).thenReturn(null);
 
         assertThrows(ClientNotFoundException.class,
                 () -> service.creditAnalysis(creditAnalysisRequest),
