@@ -3,7 +3,7 @@ server: # Configuracao do servidor
 
 spring: # Configuracao do spring
   application:
-    name: client-app # Nome que a aplicacao tera
+    name: credit-analysis-app # Nome que a aplicacao tera
 
   sql: # Configuracao do JPA
     init: # Ao incializar
