@@ -1,14 +1,13 @@
 package com.example.apianalisecredito.util;
 
-import com.example.apianalisecredito.controller.CreditAnalysisController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoggerUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreditAnalysisController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggerUtil.class);
 
-    public LoggerUtil() throws IllegalAccessException {
+    private LoggerUtil() throws IllegalAccessException {
         throw new IllegalAccessException("Class is utility");
     }
 

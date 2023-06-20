@@ -10,12 +10,14 @@ import com.example.apianalisecredito.mapper.CreditAnalysisMapper;
 import com.example.apianalisecredito.model.CreditAnalysisModel;
 import com.example.apianalisecredito.repository.CreditAnalysisRepository;
 import com.example.apianalisecredito.repository.entity.CreditAnalysisEntity;
+import com.example.apianalisecredito.util.LoggerUtil;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -79,6 +81,9 @@ public class CreditAnalysisService {
 
         final List<CreditAnalysisEntity> creditAnalysisEntities = repository.findAllByClientId(id);
 
+        MDC.put("cpf", cpf);
+        MDC.put("idClient", id.toString());
+        LoggerUtil.logInfo("", this.getClass());
         return creditAnalysisEntities.stream().map(mapper::fromResponse).toList();
     }
 
