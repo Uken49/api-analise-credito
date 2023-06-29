@@ -1,5 +1,6 @@
 package com.example.apianalisecredito.model;
 
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Builder;
@@ -9,7 +10,9 @@ public record CreditAnalysisModel(
         Boolean approved,
         BigDecimal approvedLimit,
         BigDecimal withdraw,
+        @Positive(message = "monthlyIncome deve ser positivo")
         BigDecimal monthlyIncome,
+        @Positive(message = "requestedAmount deve ser positivo")
         BigDecimal requestedAmount,
         BigDecimal annualInterest,
         UUID clientId,
